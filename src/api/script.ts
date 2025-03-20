@@ -209,6 +209,9 @@ namespace Api {
 }
 
 
+/*---- 以下qrcode-generator.tsをモジュールとして読み込めなかったので直接書き込んだもの ----*/
+
+
 namespace QrCodeGenerator {
 
     type bit = number;
