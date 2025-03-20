@@ -21,6 +21,8 @@
  *   Software.
  */
 
+// This code is a proprietary extension of the above QR Code generator library.
+
 "use strict";
 
 
@@ -800,6 +802,16 @@ namespace QrCodeGenerator {
                 return [QrSegment.makeBytes(QrSegment.toUtf8ByteArray(text))];
         }
 
+        // Returns a new mutable list of zero or more segments to represent the given hexadecimal notation byte string.
+        public static makeSegmentsFromBinary(binary: string): Array<QrSegment> {
+            if (binary == "")
+                return [];
+            else if (QrSegment.isBinaric(binary))
+                return [QrSegment.makeBytes(QrSegment.toByteArray(binary))];
+            else
+                return [];
+        }
+
 
         // Returns a segment representing an Extended Channel Interpretation
         // (ECI) designator with the given assignment value.
@@ -833,6 +845,14 @@ namespace QrCodeGenerator {
         // (uppercase only), space, dollar, percent, asterisk, plus, hyphen, period, slash, colon.
         public static isAlphanumeric(text: string): boolean {
             return QrSegment.ALPHANUMERIC_REGEX.test(text);
+        }
+
+
+        // Tests whether the given string can be encoded as a segment in binaric mode.
+        // A string is encodable iff each character is in the following set and the number
+        // of digits is even, excluding spaces and comma: 0 to 9, A to F, a to f, comma, space.
+        public static isBinaric(text: string): boolean {
+            return QrSegment.BINARIC_REGEX.test(text);
         }
 
 
@@ -896,6 +916,18 @@ namespace QrCodeGenerator {
             return result;
         }
 
+        // Returns a new array of bytes representing the given hexadecimal notation byte string.
+        private static toByteArray(str: string): Array<byte> {
+            let result: Array<byte> = [];
+            str = str.replace(/[ ,]/g, "");
+            const matches = str.match(/../g)
+            matches?.forEach(element => {
+                result.push(parseInt(element, 16));
+            });
+
+            return result;
+        }
+
 
         /*-- Constants --*/
 
@@ -904,6 +936,9 @@ namespace QrCodeGenerator {
 
         // Describes precisely all strings that are encodable in alphanumeric mode.
         private static readonly ALPHANUMERIC_REGEX: RegExp = /^[A-Z0-9 $%*+.\/:-]*$/;
+
+        // Describes precisely all strings that can be interpreted as byte strings in hexadecimal notation.
+        private static readonly BINARIC_REGEX: RegExp = /^([0-9A-Fa-f]{2}[ ,]*)*$/;
 
         // The set of all legal characters in alphanumeric mode,
         // where each character value maps to the index in the string.
