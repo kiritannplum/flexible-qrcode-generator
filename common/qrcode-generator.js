@@ -22,6 +22,8 @@
  */
 // This code is a proprietary extension of the above QR Code generator library.
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.QrCodeGenerator = void 0;
 var QrCodeGenerator;
 (function (QrCodeGenerator) {
     /*---- QR Code symbol class ----*/
@@ -802,7 +804,7 @@ var QrCodeGenerator;
     // where each character value maps to the index in the string.
     QrSegment.ALPHANUMERIC_CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
     QrCodeGenerator.QrSegment = QrSegment;
-})(QrCodeGenerator || (QrCodeGenerator = {}));
+})(QrCodeGenerator || (exports.QrCodeGenerator = QrCodeGenerator = {}));
 /*---- Public helper enumeration ----*/
 (function (QrCodeGenerator) {
     var QrCode;
@@ -828,7 +830,7 @@ var QrCodeGenerator;
         Ecc.HIGH = new Ecc(3, 2); // The QR Code can tolerate about 30% erroneous codewords
         QrCode.Ecc = Ecc;
     })(QrCode = QrCodeGenerator.QrCode || (QrCodeGenerator.QrCode = {}));
-})(QrCodeGenerator || (QrCodeGenerator = {}));
+})(QrCodeGenerator || (exports.QrCodeGenerator = QrCodeGenerator = {}));
 /*---- Public helper enumeration ----*/
 (function (QrCodeGenerator) {
     var QrSegment;
@@ -861,4 +863,4 @@ var QrCodeGenerator;
         Mode.ECI = new Mode(0x7, [0, 0, 0]);
         QrSegment.Mode = Mode;
     })(QrSegment = QrCodeGenerator.QrSegment || (QrCodeGenerator.QrSegment = {}));
-})(QrCodeGenerator || (QrCodeGenerator = {}));
+})(QrCodeGenerator || (exports.QrCodeGenerator = QrCodeGenerator = {}));

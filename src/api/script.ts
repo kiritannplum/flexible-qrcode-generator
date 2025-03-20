@@ -1,31 +1,215 @@
-/* 
- * QR Code generator library (TypeScript)
- * 
- * Copyright (c) Project Nayuki. (MIT License)
- * https://www.nayuki.io/page/qr-code-generator-library
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- * - The above copyright notice and this permission notice shall be included in
- *   all copies or substantial portions of the Software.
- * - The Software is provided "as is", without warranty of any kind, express or
- *   implied, including but not limited to the warranties of merchantability,
- *   fitness for a particular purpose and noninfringement. In no event shall the
- *   authors or copyright holders be liable for any claim, damages or other
- *   liability, whether in an action of contract, tort or otherwise, arising from,
- *   out of or in connection with the Software or the use or other dealings in the
- *   Software.
- */
+'use strict';
+//import { QrCodeGenerator } from '../common/qrcode-generator';
 
-// This code is a proprietary extension of the above QR Code generator library.
+namespace Api {
 
-"use strict";
+    function drawQrCode() {
 
-export namespace QrCodeGenerator {
+        function makeSegments(binary: string | null, data: string | null): Array<QrCodeGenerator.QrSegment> {
+            if (binary) {
+                return QrCodeGenerator.QrSegment.makeSegmentsFromBinary(binary);
+            } else if (data) {
+                return QrCodeGenerator.QrSegment.makeSegments(data);
+            } else {
+                throw new Error('No data provided');
+            }
+        }
+
+        function getEcl(ecl: string): QrCodeGenerator.QrCode.Ecc {
+            switch (ecl) {
+                case 'L':
+                case 'l': return QrCodeGenerator.QrCode.Ecc.LOW;
+                case 'M':
+                case 'm': return QrCodeGenerator.QrCode.Ecc.MEDIUM;
+                case 'Q':
+                case 'q': return QrCodeGenerator.QrCode.Ecc.QUARTILE;
+                case 'H':
+                case 'h': return QrCodeGenerator.QrCode.Ecc.HIGH;
+                default: throw new Error('Invalid error correction level: ' + ecl);
+            }
+        }
+
+        function getVer(ver: string | null, minVer: string | null, maxVer: string | null): [number, number] {
+            const parsedVer = parseInt(ver ?? '');
+            let parsedMinVer = parseInt(minVer ?? '');
+            let parsedMaxVer = parseInt(maxVer ?? '');
+
+            if (isNaN(parsedVer)) {
+                parsedMinVer = isNaN(parsedMinVer) ? QrCodeGenerator.QrCode.MIN_VERSION : parsedMinVer;
+                parsedMaxVer = isNaN(parsedMaxVer) ? QrCodeGenerator.QrCode.MAX_VERSION : parsedMaxVer;
+            } else {
+                parsedMinVer = parsedVer;
+                parsedMaxVer = parsedVer;
+            }
+
+            if (parsedMinVer < QrCodeGenerator.QrCode.MIN_VERSION) {
+                parsedMinVer = QrCodeGenerator.QrCode.MIN_VERSION;
+            } else if (parsedMaxVer > QrCodeGenerator.QrCode.MAX_VERSION) {
+                parsedMaxVer = QrCodeGenerator.QrCode.MAX_VERSION;
+            } else if (parsedMinVer > parsedMaxVer) {
+                throw new Error('Minimum version number is greater than maximum version number');
+            }
+            return [parsedMinVer, parsedMaxVer];
+        }
+
+        function getMask(mask: string | null): number {
+            const parsedMask = parseInt(mask ?? '');
+            if (isNaN(parsedMask)) {
+                return -1;
+            }
+            if (parsedMask < -1 || parsedMask > 7) {
+                throw new Error('Invalid mask number: ' + parsedMask);
+            }
+            return parsedMask;
+        }
+
+        function parseBool(value: string | null): boolean | null {
+            switch (value?.toLowerCase()) {
+                case 'true':
+                case '1': return true;
+                case 'false':
+                case '0': return false;
+                default: return null;
+            }
+        }
+
+        function parseIntAndClamp(value: string | null, def: number, min: number, max: number): number {
+            const parsedValue = parseInt(value ?? '');
+            if (isNaN(parsedValue)) {
+                return def;
+            } else if (parsedValue < min) {
+                return min;
+            } else if (parsedValue > max) {
+                return max;
+            }
+            return parsedValue;
+        }
+
+        function getBorder(border: string | null): number {
+            return parseIntAndClamp(border, 4, 0, 100);
+        }
+
+        function getSize(size: string | null): number {
+            return parseIntAndClamp(size, 10, 1, 100);
+        }
+
+        function getColors(color: string | null, defColor: string): string {
+            if (!color || !/^#*([0-9A-F]{3}){1,2}$/i.test(color)) {
+                return defColor;
+            }
+            color = color.replace(/^#/, '');
+            if (color.length === 3) {
+                color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+            }
+            if (color.length !== 6) {
+                return defColor;
+            }
+            return '#' + color;
+        }
+
+        function getFormat(format: string | null): string {
+            format = format ?? 'png';
+            switch (format?.toLowerCase()) {
+                case 'png':
+                case 'svg': return format;
+                default: throw new Error('Invalid format: ' + format);
+            }
+        }
+
+        function drawPng(qr: QrCodeGenerator.QrCode, border: number, size: number, offColor: string, onColor: string, bgColor: string, text: string, textColor: string) {
+            if (border < 0) {
+                throw new Error('Invalid border size');
+            }
+            if (size <= 0) {
+                throw new Error('Invalid module size');
+            }
+
+            const canvas = document.createElement('canvas');
+            const width = (qr.size + border * 2) * size;
+            canvas.width = width;
+            canvas.height = width;
+            let ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+            //ctx.fillStyle = '#FF0000';
+            ctx.fillRect(0, 0, width, width);
+
+            for (let y = -border; y < qr.size + border; y++) {
+                for (let x = -border; x < qr.size + border; x++) {
+                    ctx.fillStyle = qr.getModule(x, y) ? onColor : offColor;
+                    ctx.fillRect((x + border) * size, (y + border) * size, size, size);
+                }
+            }
+
+            return canvas.toDataURL('image/png');
+        }
+
+        function drawImage(qr: QrCodeGenerator.QrCode, border: number, size: number, offColor: string, onColor: string, bgColor: string, text: string, textColor: string, format: string) {
+            let img = document.createElement('img');
+            switch (format) {
+                case 'png':
+                    img.src = drawPng(qr, border, size, offColor, onColor, bgColor, text, textColor);
+                    break;
+                case 'svg':
+                    //drawSvg(qr, border, size, offColor, onColor, bgColor, text, textColor);
+                    throw new Error('SVG format is not supported yet');
+                    break;
+                default:
+                    throw new Error('Invalid format: ' + format);
+            }
+
+            document.body.appendChild(img);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const binary = urlParams.get('binary');
+        const data = urlParams.get('data');
+        const segs = makeSegments(binary, data);
+
+        const ecl = getEcl(urlParams.get('ecl') ?? 'M');
+
+        const inputVer = urlParams.get('ver');
+        const inputMinVer = urlParams.get('min-ver');
+        const inputMaxVer = urlParams.get('max-ver');
+        const [minVer, maxVer] = getVer(inputVer, inputMinVer, inputMaxVer);
+
+        const mask = getMask(urlParams.get('mask'));
+
+        const boostEcl = parseBool(urlParams.get('boost-ecl')) ?? false;
+
+        const qr: QrCodeGenerator.QrCode = QrCodeGenerator.QrCode.encodeSegments(segs, ecl, minVer, maxVer, mask, boostEcl);
+
+        const border = getBorder(urlParams.get('border'))
+        const size = getSize(urlParams.get('size'))
+
+        const offColor = getColors(urlParams.get('light-color'), '#FFFFFF');
+        const onColor = getColors(urlParams.get('dark-color'), '#000000');
+        const bgColor = getColors(urlParams.get('bg-color'), '#FFFFFF');
+
+        const text = urlParams.get('text') ?? '';
+        const textColor = getColors(urlParams.get('text-color'), '#000000');
+
+        const format = getFormat(urlParams.get('format'));
+
+        drawImage(qr, border, size, offColor, onColor, bgColor, text, textColor, format);
+    }
+
+    function main() {
+        try {
+            drawQrCode();
+        } catch (e) {
+            if (e instanceof Error) {
+                document.body.innerText = e.message;
+            }
+            console.error(e);
+        }
+    }
+
+    // ページロード時に実行
+    document.addEventListener('DOMContentLoaded', main);
+}
+
+
+namespace QrCodeGenerator {
 
     type bit = number;
     type byte = number;
@@ -951,7 +1135,7 @@ export namespace QrCodeGenerator {
 
 /*---- Public helper enumeration ----*/
 
-export namespace QrCodeGenerator.QrCode {
+namespace QrCodeGenerator.QrCode {
 
     type int = number;
 
@@ -984,7 +1168,7 @@ export namespace QrCodeGenerator.QrCode {
 
 /*---- Public helper enumeration ----*/
 
-export namespace QrCodeGenerator.QrSegment {
+namespace QrCodeGenerator.QrSegment {
 
     type int = number;
 
