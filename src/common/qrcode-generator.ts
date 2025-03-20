@@ -24,7 +24,7 @@
 "use strict";
 
 
-namespace qrcodegen {
+namespace QrCodeGenerator {
 
     type bit = number;
     type byte = number;
@@ -59,7 +59,7 @@ namespace qrcodegen {
         // QR Code version is automatically chosen for the output. The ECC level of the result may be higher than the
         // ecl argument if it can be done without increasing the version.
         public static encodeText(text: string, ecl: QrCode.Ecc): QrCode {
-            const segs: Array<QrSegment> = qrcodegen.QrSegment.makeSegments(text);
+            const segs: Array<QrSegment> = QrCodeGenerator.QrSegment.makeSegments(text);
             return QrCode.encodeSegments(segs, ecl);
         }
 
@@ -69,7 +69,7 @@ namespace qrcodegen {
         // bytes allowed is 2953. The smallest possible QR Code version is automatically chosen for the output.
         // The ECC level of the result may be higher than the ecl argument if it can be done without increasing the version.
         public static encodeBinary(data: Readonly<Array<byte>>, ecl: QrCode.Ecc): QrCode {
-            const seg: QrSegment = qrcodegen.QrSegment.makeBytes(data);
+            const seg: QrSegment = QrCodeGenerator.QrSegment.makeBytes(data);
             return QrCode.encodeSegments([seg], ecl);
         }
 
@@ -917,7 +917,7 @@ namespace qrcodegen {
 
 /*---- Public helper enumeration ----*/
 
-namespace qrcodegen.QrCode {
+namespace QrCodeGenerator.QrCode {
 
     type int = number;
 
@@ -950,7 +950,7 @@ namespace qrcodegen.QrCode {
 
 /*---- Public helper enumeration ----*/
 
-namespace qrcodegen.QrSegment {
+namespace QrCodeGenerator.QrSegment {
 
     type int = number;
 
